@@ -17,12 +17,13 @@ import pandas as pd
 wo_excel = r'Z:\All Crews - QA QC.xlsx'
 
 # Create dataframe from previous WO data
-wo_df = pd.read_excel(wo_excel)
+wo_df = pd.read_excel(wo_excel, sheetname = 'Python')
 
 # create a df of crews and how many random QC/QA work orders are needed
-ops = ['OPS A', 'OPS B', 'OPS C', 'OPS D']
-qc = [11, 20, 2, 24]
-qa = [8, 16, 2, 19]
+ops = ['OPS A', 'OPS B', 'OPS C', 'OPS D', 'LOCK']
+qc = [4, 6, 1, 8, 2]
+qa = [2, 4, 1, 5, 1]
+
 ops_qc_qa_zip = list(zip(ops, qc, qa))
 ops_qc_qa = pd.DataFrame(data = ops_qc_qa_zip, columns=['Crew', 'QC', 'QA'])
 print('\n', ops_qc_qa,'\n')
@@ -49,17 +50,48 @@ while i < len(ops_qc_qa):
                           (wo_df['KPI WO Due Status']=='Completed Late')
                           ].sample(qa[i])
     
-    # add columns to specify if QC or QA
-    qa_wo['QC or QA'] = 'QA'
-    qc_wo['QC or QA'] = 'QC'
+    # add columns at front of df to specify if QC or QA
+    qa_wo.insert(0, 'QC/QA', 'QA')
+    qc_wo.insert(0, 'QC/QA', 'QC')
     
     # append dataframes together
     qc_wo = qc_wo.append(qa_wo, ignore_index=True)
     
-    # export to an excel file
-    qc_wo.to_excel(ops[i] + r' - QC and QA work orders.xlsx', 
-                   index=False)
     
+    # export to an excel file
+    file_path = r'C:\Users\dh1023\Desktop\Python\qa_qc_reports\{} - QC and QA work orders.xlsx'.format(ops[i])
+    
+    # get the excel writer
+    writer = pd.ExcelWriter(file_path)
+    qc_wo.to_excel(writer, index=False)
+
+    # Get the xlsxwriter workbook and worksheet objects.
+    workbook  = writer.book
+    worksheet = writer.sheets['Sheet1']
+    
+    # column format - wrap the text and add border
+    format_wrap = workbook.add_format()
+    format_wrap.set_text_wrap()
+    format_wrap.set_border()
+    format_wrap.set_align('top')
+    format_wrap.set_align('left')
+    # Set the column width and format
+    worksheet.set_column('A:A', 6, format_wrap)
+    worksheet.set_column('B:B', 11, format_wrap)
+    worksheet.set_column('C:C', 6, format_wrap)
+    worksheet.set_column('D:D', 4, format_wrap)
+    worksheet.set_column('E:E', 8, format_wrap)
+    worksheet.set_column('F:F', 27, format_wrap)
+    worksheet.set_column('G:G', 40, format_wrap)
+    worksheet.set_column('H:H', 7, format_wrap)
+    worksheet.set_column('I:I', 22, format_wrap)
+    worksheet.set_column('J:J', 5, format_wrap)
+    worksheet.set_column('K:K', 8, format_wrap)
+    worksheet.set_column('L:L', 10, format_wrap)
+    worksheet.set_column('M:M', 18, format_wrap)
+    # write the file
+    writer.save()
+        
     print('Completed', ops[i])
     i +=1
 
